@@ -12,11 +12,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
 
-//@RestController
-//@RequestMapping(value = "/login")
+@RestController
+@RequestMapping(value = "/login")
 public class LoginResource {
 
-   // @PostMapping
+    @PostMapping
     public String login(@AuthenticationPrincipal User user) {
         System.out.println(user.getAuthorities());
         return String.format("Token, %s!", user.getUsername());

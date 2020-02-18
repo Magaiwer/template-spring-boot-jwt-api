@@ -34,6 +34,11 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     @Autowired
     private TokenProvider tokenProvider;
 
+
+    public AuthenticationFilter(AuthenticationManager authenticationManager) {
+        this.authenticationManager = authenticationManager;
+    }
+
     @Override
     @SneakyThrows
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
