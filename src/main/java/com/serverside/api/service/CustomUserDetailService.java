@@ -2,6 +2,7 @@ package com.serverside.api.service;
 
 import com.serverside.api.domain.User;
 import com.serverside.api.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
@@ -18,18 +19,15 @@ import java.util.Set;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class CustomUserDetailService implements UserDetailsService {
-
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         log.info(" search for user in the database");
         Optional<User> userOptional = userRepository.findByEmail(email);
-
         User user = userOptional.orElseThrow(() -> new UsernameNotFoundException("Bad credentials"));
-
         return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), getAuthorities(user));
     }
 
@@ -37,7 +35,9 @@ public class CustomUserDetailService implements UserDetailsService {
         log.info(" add authorities for the user");
         Set<SimpleGrantedAuthority> authorities = new HashSet<>();
 
-        userRepository.getPermissions(user).forEach(p -> authorities.add(new SimpleGrantedAuthority(p.toUpperCase())));
+        userRepository.getPermissions(user.getId())
+                .forEach(p -> authorities.add(new SimpleGrantedAuthority(p.toUpperCase())));
+
         return  authorities;
     }
 }

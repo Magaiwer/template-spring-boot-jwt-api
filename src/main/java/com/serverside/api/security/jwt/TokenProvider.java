@@ -11,6 +11,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.serverside.api.property.JwtConfiguration;
 import com.serverside.api.service.CustomUserDetailService;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.io.Serializable;
 import java.security.KeyPair;
@@ -32,28 +33,19 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Component
 @Slf4j
+@Service
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class TokenProvider implements Serializable {
     private static final long serialVersionUID = -2550185165626007488L;
 
-/*    @Value("${spring.jwt.secret}")
-    private String secret;
-
-    @Value("${spring.jwt.expiration}")
-    private int expirationTimeMS;*/
-
-    @Autowired
-    private JwtConfiguration jwtConfiguration;
-
-    @Autowired
-    private CustomUserDetailService customUserDetailService;
+    private final JwtConfiguration jwtConfiguration;
+    private final CustomUserDetailService customUserDetailService;
 
     @SneakyThrows
     public String generateEncryptedToken(Authentication authentication) {
         SignedJWT signedJWT = createSignedJWT(authentication);
-
-        log.info("Serialized token '{}'", signedJWT.serialize());
+        log.info("Token generated '{}'", signedJWT.serialize());
         return encryptToken(signedJWT);
     }
 
@@ -72,13 +64,9 @@ public class TokenProvider implements Serializable {
     @SneakyThrows
     public void validateTokenSignature(String signedToken) {
         log.info("Starting method to validate token signature...");
-
         SignedJWT signedJWT = SignedJWT.parse(signedToken);
-
         log.info("Token Parsed! Retrieving public key from signed token");
-
         RSAKey publicKey = RSAKey.parse(signedJWT.getHeader().getJWK().toJSONObject());
-
         log.info("Public key retrieved, validating signature. . . ");
 
         if (!signedJWT.verify(new RSASSAVerifier(publicKey)))
@@ -96,9 +84,7 @@ public class TokenProvider implements Serializable {
     }
 
     public <T> T getClaimFromToken(String token, Function<JWTClaimsSet, T> claimsResolver) {
-
         final JWTClaimsSet claims = getAllClaimsFromToken(token);
-
         return claimsResolver.apply(claims);
     }
 
@@ -138,50 +124,38 @@ public class TokenProvider implements Serializable {
 
     private SignedJWT createSignedJWT(Authentication authentication) throws NoSuchAlgorithmException, JOSEException {
         KeyPair rsaKeyPair = generateKeyPair();
-
         JWK jwk = new RSAKey.Builder((RSAPublicKey) rsaKeyPair.getPublic()).keyID(UUID.randomUUID().toString()).build();
-
+        log.info("Add key public on header request '{}' ", jwk);
         SignedJWT jwt = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS512)
                 .jwk(jwk)
                 .type(JOSEObjectType.JWT)
                 .build(), generateClaimSet(authentication));
-
         log.info("Signing the token with the private RSA Key");
-
         RSASSASigner signer = new RSASSASigner(rsaKeyPair.getPrivate());
-
         jwt.sign(signer);
         return jwt;
     }
 
-    private String encryptToken(SignedJWT token) throws JOSEException {
+    private String encryptToken(SignedJWT signedJWTToken) throws JOSEException {
         log.info("Starting the encryptToken method");
         DirectEncrypter directEncrypter = new DirectEncrypter(jwtConfiguration.getPrivateKey().getBytes());
-
-        JWEObject jweObject = new JWEObject(new JWEHeader
-                .Builder(JWEAlgorithm.DIR, EncryptionMethod.A128CBC_HS256)
+        JWEObject jweObject = new JWEObject(new JWEHeader.Builder(JWEAlgorithm.DIR, EncryptionMethod.A128CBC_HS256)
                 .contentType("JWT")
-                .build(), new Payload(token));
+                .build(), new Payload(signedJWTToken));
 
         log.info("Encrypting token with system's private key");
-
         jweObject.encrypt(directEncrypter);
-
         log.info("Token encrypted  '{}' ", jweObject.serialize());
-
         return jweObject.serialize();
     }
 
     @SneakyThrows
     public String decryptToken(String encryptedToken) {
         log.info("Decrypting token and validating");
-
         JWEObject jweObject = JWEObject.parse(encryptedToken);
         DirectDecrypter directDecrypter = new DirectDecrypter(jwtConfiguration.getPrivateKey().getBytes());
         jweObject.decrypt(directDecrypter);
-
         log.info("Token decrypted, returning signed token . . . ");
-
         return jweObject.getPayload().toSignedJWT().serialize();
     }
 
