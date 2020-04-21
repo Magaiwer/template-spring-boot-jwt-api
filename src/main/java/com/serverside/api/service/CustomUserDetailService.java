@@ -1,6 +1,7 @@
 package com.serverside.api.service;
 
 import com.serverside.api.domain.User;
+import com.serverside.api.dto.UserDTO;
 import com.serverside.api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,16 +29,15 @@ public class CustomUserDetailService implements UserDetailsService {
         log.info(" search for user in the database");
         Optional<User> userOptional = userRepository.findByEmail(email);
         User user = userOptional.orElseThrow(() -> new UsernameNotFoundException("Bad credentials"));
+        new UserDTO(user, getAuthorities(user));
         return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), getAuthorities(user));
     }
 
     private Collection<? extends GrantedAuthority> getAuthorities(User user) {
-        log.info(" add authorities for the user");
         Set<SimpleGrantedAuthority> authorities = new HashSet<>();
-
+        log.info(" add authorities for the user");
         userRepository.getPermissions(user.getId())
                 .forEach(p -> authorities.add(new SimpleGrantedAuthority(p.toUpperCase())));
-
-        return  authorities;
+        return authorities;
     }
 }

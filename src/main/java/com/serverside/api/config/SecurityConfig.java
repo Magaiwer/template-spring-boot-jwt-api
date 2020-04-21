@@ -52,7 +52,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .exceptionHandling()
                 .authenticationEntryPoint(
                         (request, response, authException) -> response.sendError(SC_UNAUTHORIZED));
-        http.addFilter(new AuthenticationFilter(authenticationManager(), getApplicationContext()));
+        http.addFilter(new AuthenticationFilter(authenticationManager(), tokenProvider, jwtConfiguration));
         http.addFilterAfter(new AuthorizationFilter(jwtConfiguration, tokenProvider), UsernamePasswordAuthenticationFilter.class);
     }
 

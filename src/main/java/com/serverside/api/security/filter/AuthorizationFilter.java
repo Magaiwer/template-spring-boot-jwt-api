@@ -31,7 +31,6 @@ public class AuthorizationFilter extends OncePerRequestFilter {
         String header = request.getHeader(jwtConfiguration.getHeaderName());
 
         if (header == null || !header.startsWith(jwtConfiguration.getHeaderValue())) {
-            log.error("Token header invalid");
             chain.doFilter(request, response);
             return;
         }
@@ -41,7 +40,8 @@ public class AuthorizationFilter extends OncePerRequestFilter {
         Authentication authentication = tokenProvider.getAuthentication(decryptedToken);
 
         if (!tokenProvider.validateToken(decryptedToken, authentication)) {
-            log.error("Invalid token");
+            log.error("Token expired");
+            chain.doFilter(request, response);
             return;
         }
 
