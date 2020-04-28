@@ -16,6 +16,8 @@ public class Group extends BaseIdDomain {
 
     @Column
     private String name;
+    @Column
+    private String description;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "group_permission", joinColumns = @JoinColumn(name = "group_id"), inverseJoinColumns = @JoinColumn(name = "permission_id"))

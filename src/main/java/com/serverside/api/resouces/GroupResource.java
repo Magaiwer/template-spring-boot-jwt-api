@@ -13,7 +13,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/group")
-@CrossOrigin
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class GroupResource {
     private final GroupService groupService;
@@ -25,7 +24,6 @@ public class GroupResource {
     }
 
     @PutMapping
-    @CrossOrigin
     public ResponseEntity<Group> update(@Valid @RequestBody Group group) {
         group = groupService.save(group);
         return new ResponseEntity<>(group, HttpStatus.OK);

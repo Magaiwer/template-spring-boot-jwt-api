@@ -35,7 +35,7 @@ public class AuthorizationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String decryptedToken = tokenProvider.decryptToken(header.replace(jwtConfiguration.getHeaderValue(), "").trim());
+        String decryptedToken = getToken(header);
         tokenProvider.validateTokenSignature(decryptedToken);
         Authentication authentication = tokenProvider.getAuthentication(decryptedToken);
 
@@ -48,6 +48,11 @@ public class AuthorizationFilter extends OncePerRequestFilter {
         log.info("Token is Valid ");
         SecurityContextHolder.getContext().setAuthentication(authentication);
         chain.doFilter(request, response);
+    }
+
+    private String getToken(String header) {
+        String token = header.replace(jwtConfiguration.getHeaderValue(), "").trim();
+        return jwtConfiguration.getType().equals("signed") ? token : tokenProvider.decryptToken(token);
     }
 
 

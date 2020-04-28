@@ -47,10 +47,8 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
         log.info("Authentication was successful for the user '{}' ", authResult.getName());
-        String token =  tokenProvider.generateEncryptedToken(authResult);
-        log.info("Token ---> '{}' ", token);
+        String token = jwtConfiguration.getType().equals("signed") ? tokenProvider.generateSignedToken(authResult) : tokenProvider.generateEncryptedToken(authResult);
         response.addHeader("Access-Control-Expose-Headers", "XSRF-TOKEN, " + jwtConfiguration.getHeaderName());
         response.addHeader( jwtConfiguration.getHeaderName(), jwtConfiguration.getHeaderValue() + token);
-       // response.addHeader("Access-Control-Allow-Headers", "Access-Control-Request-Method");
     }
 }

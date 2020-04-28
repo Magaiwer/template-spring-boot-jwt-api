@@ -14,7 +14,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/login")
-@CrossOrigin
 public class LoginResource {
 
 }

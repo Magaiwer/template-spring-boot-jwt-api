@@ -45,10 +45,16 @@ public class TokenProvider implements Serializable {
     @SneakyThrows
     public String generateEncryptedToken(Authentication authentication) {
         SignedJWT signedJWT = createSignedJWT(authentication);
-        log.info("Token generated '{}'", signedJWT.serialize());
+        log.info("Token Encrypted generated '{}'", signedJWT.serialize());
         return encryptToken(signedJWT);
     }
 
+    @SneakyThrows
+    public String generateSignedToken(Authentication authentication) {
+        SignedJWT signedJWT = createSignedJWT(authentication);
+        log.info("Token Signed generated '{}'", signedJWT.serialize());
+        return signedJWT.serialize();
+    }
     public Boolean validateToken(String token, Authentication userAuthentication) {
         log.info("validate token");
         final String username = getUsernameFromToken(token);
